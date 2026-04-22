@@ -31,6 +31,9 @@ class Journal extends Model
         'rejection_reason',
         'total_debit',
         'total_credit',
+        'journal_type',      // ← tambah
+        'account_bank_code', // ← tambah
+        'helper_code',       // ← tambah
     ];
 
     protected $casts = [

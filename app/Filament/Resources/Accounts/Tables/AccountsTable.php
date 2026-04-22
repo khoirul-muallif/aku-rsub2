@@ -60,7 +60,7 @@ class AccountsTable
 
                 TextColumn::make('current_balance')
                     ->label('Saldo')
-                    ->money('IDR')
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
                     ->sortable(),
 
                 IconColumn::make('is_header')

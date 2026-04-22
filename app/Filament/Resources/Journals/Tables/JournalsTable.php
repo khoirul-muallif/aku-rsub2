@@ -28,16 +28,24 @@ class JournalsTable
                     ->date('d M Y')
                     ->sortable(),
 
-                TextColumn::make('reference_type')
-                    ->label('Tipe')
+                TextColumn::make('journal_type')
+                    ->label('Tipe Jurnal')
                     ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'kas'        => 'info',
+                        'bank'       => 'primary',
+                        'memo'       => 'gray',
+                        'pendapatan' => 'success',
+                        'pembiayaan' => 'warning',
+                        default      => 'gray',
+                    })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'manual'         => 'Manual',
-                        'invoice'        => 'Invoice',
-                        'purchase_order' => 'Purchase Order',
-                        'cash_receipt'   => 'Cash Receipt',
-                        'reversal'       => 'Reversal',
-                        default          => $state,
+                        'kas'        => 'Jurnal Kas',
+                        'bank'       => 'Jurnal Bank',
+                        'memo'       => 'Jurnal Memo',
+                        'pendapatan' => 'Jurnal Pendapatan',
+                        'pembiayaan' => 'Jurnal Pembiayaan',
+                        default      => $state,
                     }),
 
                 TextColumn::make('memo')

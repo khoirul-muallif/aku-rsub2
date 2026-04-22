@@ -12,6 +12,8 @@ class JournalLine extends Model
         'account_id',
         'debit',
         'credit',
+        'running_balance',  // ← tambah
+        'helper_code',      // ← tambah
         'line_description',
         'line_number',
     ];
