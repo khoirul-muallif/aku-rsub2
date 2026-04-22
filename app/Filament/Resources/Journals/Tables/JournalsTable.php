@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -18,60 +19,70 @@ class JournalsTable
         return $table
             ->columns([
                 TextColumn::make('journal_number')
-                    ->searchable(),
+                    ->label('No. Jurnal')
+                    ->searchable()
+                    ->weight('bold'),
+
                 TextColumn::make('journal_date')
-                    ->date()
+                    ->label('Tanggal')
+                    ->date('d M Y')
                     ->sortable(),
-                TextColumn::make('period_year')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('period_month')
-                    ->numeric()
-                    ->sortable(),
+
                 TextColumn::make('reference_type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'manual'         => 'Manual',
+                        'invoice'        => 'Invoice',
+                        'purchase_order' => 'Purchase Order',
+                        'cash_receipt'   => 'Cash Receipt',
+                        'reversal'       => 'Reversal',
+                        default          => $state,
+                    }),
+
+                TextColumn::make('memo')
+                    ->label('Memo')
+                    ->limit(40)
                     ->searchable(),
-                TextColumn::make('reference_number')
-                    ->searchable(),
-                TextColumn::make('unit_code')
-                    ->searchable(),
-                TextColumn::make('budget_code')
-                    ->searchable(),
-                TextColumn::make('transaction_code')
-                    ->searchable(),
-                TextColumn::make('status')
-                    ->badge(),
-                TextColumn::make('posted_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('posted_by')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('approved_by')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('approved_at')
-                    ->dateTime()
-                    ->sortable(),
+
                 TextColumn::make('total_debit')
-                    ->numeric()
+                    ->label('Total Debit')
+                    ->money('IDR')
                     ->sortable(),
+
                 TextColumn::make('total_credit')
-                    ->numeric()
+                    ->label('Total Kredit')
+                    ->money('IDR')
                     ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'draft'            => 'gray',
+                        'posted'           => 'success',
+                        'reversed'         => 'danger',
+                        'pending_approval' => 'warning',
+                        default            => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'draft'            => 'Draft',
+                        'posted'           => 'Posted',
+                        'reversed'         => 'Reversed',
+                        'pending_approval' => 'Pending Approval',
+                        default            => $state,
+                    }),
             ])
+            ->defaultSort('journal_date', 'desc')
             ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'draft'            => 'Draft',
+                        'posted'           => 'Posted',
+                        'reversed'         => 'Reversed',
+                        'pending_approval' => 'Pending Approval',
+                    ]),
                 TrashedFilter::make(),
             ])
             ->recordActions([
