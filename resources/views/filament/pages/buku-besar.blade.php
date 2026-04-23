@@ -11,7 +11,15 @@
     </form>
 
     @if(count($reportData) > 0)
-        <div class="mt-8 space-y-8">
+        <div class="flex gap-3 mt-3">
+            <a href="{{ route('laporan.buku-besar.pdf', ['year' => $period_year, 'month' => $period_month]) }}"
+            target="_blank"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition">
+                Export PDF
+            </a>
+            
+        </div>
+            <div class="mt-8 space-y-8">
 
             <div class="text-center">
                 <h2 class="text-xl font-bold uppercase tracking-wide">Buku Besar</h2>

@@ -9,8 +9,18 @@
             </button>
         </div>
     </form>
-
     @if(count($reportData) > 0)
+        <div class="flex gap-3 mt-3">
+            <a href="{{ route('laporan.laba-rugi.pdf', ['year' => $period_year, 'month' => $period_month]) }}"
+            target="_blank"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition">
+                Export PDF
+            </a>
+            <a href="{{ route('laporan.laba-rugi.excel', ['year' => $period_year, 'month' => $period_month]) }}"
+            class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition">
+                Export Excel
+            </a>
+        </div>
         <div class="mt-8 max-w-3xl mx-auto">
 
             {{-- Header --}}
