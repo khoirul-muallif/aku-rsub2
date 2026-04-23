@@ -3,27 +3,21 @@
 namespace App\Filament\Pages;
 
 use App\Models\Account;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
-use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use BackedEnum;
 use UnitEnum;
 
-class BukuBesar extends Page implements HasForms
+class BukuBesar extends Page
 {
-    use InteractsWithForms;
-
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
     protected static ?string $navigationLabel = 'Buku Besar';
-    protected static string|UnitEnum|null $navigationGroup = 'Laporan';  // ← pakai UnitEnum
+    protected static string|UnitEnum|null $navigationGroup = 'Laporan';
     protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.buku-besar';
 
-    public ?int $period_year = null;
-    public ?int $period_month = null;
+    public int $period_year;
+    public int $period_month;
     public ?int $account_id = null;
     public array $reportData = [];
 
@@ -31,40 +25,6 @@ class BukuBesar extends Page implements HasForms
     {
         $this->period_year  = now()->year;
         $this->period_month = now()->month;
-    }
-
-    public function form(Schema $schema): Schema
-    {
-        return $schema->components([
-            Select::make('period_year')
-                ->label('Tahun')
-                ->options(array_combine(
-                    range(now()->year, now()->year - 5),
-                    range(now()->year, now()->year - 5)
-                ))
-                ->default(now()->year)
-                ->required(),
-
-            Select::make('period_month')
-                ->label('Bulan')
-                ->options([
-                    1  => 'Januari',   2  => 'Februari', 3  => 'Maret',
-                    4  => 'April',     5  => 'Mei',       6  => 'Juni',
-                    7  => 'Juli',      8  => 'Agustus',   9  => 'September',
-                    10 => 'Oktober',   11 => 'November',  12 => 'Desember',
-                ])
-                ->default(now()->month)
-                ->required(),
-
-            Select::make('account_id')
-                ->label('Akun (kosongkan untuk semua)')
-                ->options(
-                    Account::active()->orderBy('code')
-                        ->get()->mapWithKeys(fn ($a) => [$a->id => "{$a->code} - {$a->name}"])
-                )
-                ->searchable()
-                ->nullable(),
-        ])->columns(3);
     }
 
     public function generate(): void

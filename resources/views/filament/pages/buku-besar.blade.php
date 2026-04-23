@@ -1,24 +1,50 @@
 
 <x-filament-panels::page>
     <script src="https://cdn.tailwindcss.com"></script>
-    <form wire:submit="generate">
-        {{ $this->form }}
-        <div class="mt-4">
-            <button type="submit" class="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-lg transition">
-                Generate Laporan
-            </button>
-        </div>
-    </form>
 
-    @if(count($reportData) > 0)
-        <div class="flex gap-3 mt-3">
-            <a href="{{ route('laporan.buku-besar.pdf', ['year' => $period_year, 'month' => $period_month]) }}"
-            target="_blank"
-            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition">
-                Export PDF
-            </a>
-            
-        </div>
+        <form wire:submit="generate">
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tahun</label>
+                    <select wire:model="period_year" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        @foreach(range(now()->year, now()->year - 5) as $y)
+                            <option value="{{ $y }}">{{ $y }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Bulan</label>
+                    <select wire:model="period_month" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        @foreach([1=>'Januari',2=>'Februari',3=>'Maret',4=>'April',5=>'Mei',6=>'Juni',7=>'Juli',8=>'Agustus',9=>'September',10=>'Oktober',11=>'November',12=>'Desember'] as $k => $v)
+                            <option value="{{ $k }}">{{ $v }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Akun (kosongkan untuk semua)</label>
+                    <select wire:model="account_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">-- Semua Akun --</option>
+                        @foreach(\App\Models\Account::active()->orderBy('code')->get() as $acc)
+                            <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-3">
+                <button type="submit" class="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-lg transition">
+                    Generate Laporan
+                </button>
+                @if(count($reportData) > 0)
+                    <a href="{{ route('laporan.buku-besar.pdf', ['year' => $period_year, 'month' => $period_month, 'account_id' => $account_id]) }}"
+                    target="_blank"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition">
+                        Export PDF
+                    </a>
+                @endif
+            </div>
+        </form>
+
+            @if(count($reportData) > 0)
             <div class="mt-8 space-y-8">
 
             <div class="text-center">

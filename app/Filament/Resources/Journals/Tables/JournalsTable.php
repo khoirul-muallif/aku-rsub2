@@ -11,6 +11,9 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Auth;
 
 class JournalsTable
 {
@@ -55,13 +58,15 @@ class JournalsTable
 
                 TextColumn::make('total_debit')
                     ->label('Total Debit')
-                    ->money('IDR')
-                    ->sortable(),
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('total_credit')
                     ->label('Total Kredit')
-                    ->money('IDR')
-                    ->sortable(),
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -93,8 +98,48 @@ class JournalsTable
                     ]),
                 TrashedFilter::make(),
             ])
-            ->recordActions([
-                EditAction::make(),
+             ->recordActions([
+                Action::make('post')
+                    ->label('Post')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Post Jurnal')
+                    ->modalDescription('Jurnal yang sudah diposting tidak bisa diedit. Pastikan debit = kredit.')
+                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->action(function ($record) {
+                        if ($record->total_debit != $record->total_credit) {
+                            Notification::make()
+                                ->title('Gagal!')
+                                ->body('Total debit Rp ' . number_format($record->total_debit, 0, ',', '.') . ' tidak sama dengan kredit Rp ' . number_format($record->total_credit, 0, ',', '.'))
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        if ($record->lines()->count() < 2) {
+                            Notification::make()
+                                ->title('Gagal!')
+                                ->body('Jurnal minimal harus memiliki 2 baris detail.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        $record->update([
+                            'status'    => 'posted',
+                            'posted_at' => now(),
+                            'posted_by' => Auth::id(),
+                        ]);
+
+                        Notification::make()
+                            ->title('Berhasil!')
+                            ->body("Jurnal {$record->journal_number} berhasil diposting.")
+                            ->success()
+                            ->send();
+                    }),
+                EditAction::make()
+                    ->visible(fn ($record) => $record->status === 'draft'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
