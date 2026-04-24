@@ -5,6 +5,8 @@ namespace App\Filament\Widgets;
 use App\Models\Account;
 use App\Models\Journal;
 use App\Models\JournalLine;
+use App\Models\Receivable;
+use App\Models\Payable;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -81,6 +83,21 @@ class StatsOverview extends BaseWidget
                 ->description('Sudah diposting')
                 ->descriptionIcon('heroicon-o-document-check')
                 ->color('teal'),
+            Stat::make('Total Piutang', 'Rp ' . number_format(
+                Receivable::unpaid()->sum('amount') - Receivable::unpaid()->sum('paid_amount'),
+                            0, ',', '.'
+                        ))
+                ->description('Belum tertagih')
+                ->descriptionIcon('heroicon-o-inbox-arrow-down')
+                ->color('warning'),
+
+            Stat::make('Total Hutang', 'Rp ' . number_format(
+                Payable::unpaid()->sum('amount') - Payable::unpaid()->sum('paid_amount'),
+                        0, ',', '.'
+                    ))
+                ->description('Belum dibayar')
+                ->descriptionIcon('heroicon-o-arrow-up-circle')
+                ->color('danger'),
         ];
     }
 }
