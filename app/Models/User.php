@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,19 +16,18 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<UserFactory> */
-     use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, HasPanelShield;
 
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
         ];
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $this->hasAnyRole(['super_admin', 'akuntan', 'kasir']);
     }
 }
