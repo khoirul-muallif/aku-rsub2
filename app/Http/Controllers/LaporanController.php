@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Exports\LabaRugiExport;
 use App\Exports\NeracaExport;
+use App\Models\Account;
+use App\Models\JournalLine;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanController extends Controller
@@ -169,5 +171,39 @@ class LaporanController extends Controller
             ->setPaper('a4', 'landscape');
 
         return $pdf->download("buku-besar-{$year}-{$month}.pdf");
+    }
+    public function cashFlowPdf(Request $request)
+    {
+        $year  = $request->get('year', now()->year);
+        $month = $request->get('month', now()->month);
+
+        $akunKas = Account::active()
+            ->where('type', 'asset')
+            ->where('code', 'like', '1.1%')
+            ->posting()->pluck('id');
+
+        $penerimaan = JournalLine::whereIn('account_id', $akunKas)
+            ->whereHas('journal', fn($q) => $q
+                ->where('period_year', $year)->where('period_month', $month)
+                ->where('status', 'posted')->whereIn('journal_type', ['kas', 'bank']))
+            ->where('debit', '>', 0)->with(['journal', 'account'])->get();
+
+        $pengeluaran = JournalLine::whereIn('account_id', $akunKas)
+            ->whereHas('journal', fn($q) => $q
+                ->where('period_year', $year)->where('period_month', $month)
+                ->where('status', 'posted')->whereIn('journal_type', ['kas', 'bank']))
+            ->where('credit', '>', 0)->with(['journal', 'account'])->get();
+
+        $totalPenerimaan  = $penerimaan->sum('debit');
+        $totalPengeluaran = $pengeluaran->sum('credit');
+        $saldoAwal        = Account::whereIn('id', $akunKas)->sum('current_balance');
+
+        $data = compact('penerimaan', 'pengeluaran', 'totalPenerimaan',
+            'totalPengeluaran', 'saldoAwal', 'year', 'month');
+        $data['netCashFlow'] = $totalPenerimaan - $totalPengeluaran;
+        $data['saldoAkhir']  = $saldoAwal + $data['netCashFlow'];
+
+        $pdf = Pdf::loadView('laporan.cash-flow-pdf', $data)->setPaper('a4', 'portrait');
+        return $pdf->download("cash-flow-{$year}-{$month}.pdf");
     }
 }
