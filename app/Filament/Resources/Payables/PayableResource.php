@@ -18,7 +18,9 @@ use App\Filament\Resources\Payables\RelationManagers\PaymentsRelationManager;
 
 
 class PayableResource extends Resource
-{
+{   
+    protected static ?string $label = 'Hutang';
+    protected static ?string $pluralLabel = 'Daftar Hutang';
     protected static ?string $model = Payable::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowUpCircle;
     protected static ?string $recordTitleAttribute = 'invoice_number';

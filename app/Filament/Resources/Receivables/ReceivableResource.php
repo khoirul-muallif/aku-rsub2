@@ -19,6 +19,8 @@ use App\Filament\Resources\Receivables\RelationManagers\PaymentsRelationManager;
 
 class ReceivableResource extends Resource
 {
+    protected static ?string $label = 'Piutang';
+    protected static ?string $pluralLabel = 'Daftar Piutang';
     protected static ?string $model = Receivable::class;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxArrowDown;
     protected static ?string $recordTitleAttribute = 'invoice_number';
