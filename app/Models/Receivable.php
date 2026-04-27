@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 class Receivable extends Model
 {
@@ -58,5 +60,25 @@ class Receivable extends Model
             ->latest('id')->first();
         $next = $latest ? intval(substr($latest->invoice_number, -4)) + 1 : 1;
         return sprintf('PIU-%s%02d-%04d', $year, $month, $next);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(ReceivablePayment::class);
+    }
+
+    public function updatePaidAmount(): void
+    {
+        $totalPaid = $this->payments()->sum('amount');
+        $sisa      = (float) $this->amount - $totalPaid - (float) $this->discount;
+
+        $this->paid_amount = $totalPaid;
+        $this->status      = match(true) {
+            $sisa <= 0  => 'paid',
+            $totalPaid > 0 => 'partial',
+            default     => 'unpaid',
+        };
+        $this->paid_date = $sisa <= 0 ? $this->payments()->latest()->first()?->paid_date : null;
+        $this->save();
     }
 }

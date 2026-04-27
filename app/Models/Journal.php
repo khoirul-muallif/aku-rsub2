@@ -142,24 +142,30 @@ class Journal extends Model
      */
     public function markAsPosted($userId): bool
     {
-        // Validate double-entry balance
         if (!$this->isBalanced()) {
             return false;
         }
 
-        // Validate tidak ada header accounts
         foreach ($this->lines as $line) {
             if (!$line->account->canPost()) {
                 return false;
             }
         }
 
-        // Update journal status
-        $this->status = 'posted';
+        $this->status    = 'posted';
         $this->posted_at = now();
         $this->posted_by = $userId;
-        
-        return $this->save();
+
+        if ($this->save()) {
+            // Recalculate running balance untuk semua akun yang terlibat
+            $accountIds = $this->lines->pluck('account_id')->unique();
+            foreach ($accountIds as $accountId) {
+                static::recalculateRunningBalance($accountId);
+            }
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -250,4 +256,32 @@ class Journal extends Model
         $this->total_credit = $this->lines()->sum('credit');
         $this->save();
     }
+    public static function recalculateRunningBalance(int $accountId): void
+    {
+        $account = \App\Models\Account::find($accountId);
+        if (!$account) return;
+
+        $lines = \App\Models\JournalLine::where('journal_lines.account_id', $accountId)
+            ->join('journals', 'journal_lines.journal_id', '=', 'journals.id')
+            ->where('journals.status', 'posted')
+            ->orderBy('journals.journal_date', 'asc')
+            ->orderBy('journals.id', 'asc')
+            ->orderBy('journal_lines.id', 'asc')
+            ->select('journal_lines.*')
+            ->get();
+
+        $runningBalance = (float) $account->current_balance;
+
+        foreach ($lines as $line) {
+            if ($account->normal_side === 'debit') {
+                $runningBalance += (float) $line->debit - (float) $line->credit;
+            } else {
+                $runningBalance += (float) $line->credit - (float) $line->debit;
+            }
+
+            \App\Models\JournalLine::where('id', $line->id)
+                ->update(['running_balance' => $runningBalance]);
+        }
+    }
+
 }

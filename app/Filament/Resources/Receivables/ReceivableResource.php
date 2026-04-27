@@ -14,6 +14,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Filament\Resources\Receivables\RelationManagers\PaymentsRelationManager;
+
 
 class ReceivableResource extends Resource
 {
@@ -36,7 +38,9 @@ class ReceivableResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+         return [
+            PaymentsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
@@ -47,4 +51,5 @@ class ReceivableResource extends Resource
             'edit'   => EditReceivable::route('/{record}/edit'),
         ];
     }
+
 }
