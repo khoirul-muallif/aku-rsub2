@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class JournalResource extends Resource
 {
+    protected static ?string $label = 'Jurnal';
+    protected static ?string $pluralLabel = 'Daftar Jurnal';
     protected static ?string $model = Journal::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;

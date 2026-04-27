@@ -12,4 +12,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/laporan/buku-besar/pdf', [LaporanController::class, 'bukuBesarPdf'])->name('laporan.buku-besar.pdf');
     Route::get('/laporan/cash-flow/pdf', [LaporanController::class, 'cashFlowPdf'])->name('laporan.cash-flow.pdf');
     Route::get('/laporan/aging/pdf', [LaporanController::class, 'agingPdf'])->name('laporan.aging.pdf');
+    Route::get('/laporan/neraca-lajur/pdf', [LaporanController::class, 'neracaLajurPdf'])->name('laporan.neraca-lajur.pdf');
 });

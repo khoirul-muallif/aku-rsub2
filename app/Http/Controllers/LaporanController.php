@@ -273,4 +273,66 @@ class LaporanController extends Controller
         $pdf = Pdf::loadView('laporan.aging-pdf', $data)->setPaper('a4', 'landscape');
         return $pdf->download("aging-{$type}-{$asOfDate}.pdf");
     }
+    public function neracaLajurPdf(Request $request)
+    {
+        $year  = $request->get('year', now()->year);
+        $month = $request->get('month', now()->month);
+
+        $accounts = Account::active()->posting()->orderBy('code')->get();
+        $rows     = [];
+        $totals   = [
+            'ns_debit' => 0, 'ns_credit' => 0,
+            'lr_debit' => 0, 'lr_credit' => 0,
+            'ner_debit'=> 0, 'ner_credit'=> 0,
+        ];
+
+        foreach ($accounts as $account) {
+            $lines = JournalLine::where('account_id', $account->id)
+                ->whereHas('journal', fn($q) => $q
+                    ->where('period_year', $year)
+                    ->where('period_month', $month)
+                    ->where('status', 'posted'))
+                ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+                ->first();
+
+            $mutasiDebit  = (float) ($lines->total_debit ?? 0);
+            $mutasiKredit = (float) ($lines->total_credit ?? 0);
+            $saldoAwal    = (float) $account->current_balance;
+
+            if ($account->normal_side === 'debit') {
+                $nsDebit  = $saldoAwal + $mutasiDebit;
+                $nsCredit = $mutasiKredit;
+                if ($nsDebit > $nsCredit) { $nsDebit -= $nsCredit; $nsCredit = 0; }
+                else { $nsCredit -= $nsDebit; $nsDebit = 0; }
+            } else {
+                $nsCredit = $saldoAwal + $mutasiKredit;
+                $nsDebit  = $mutasiDebit;
+                if ($nsCredit > $nsDebit) { $nsCredit -= $nsDebit; $nsDebit = 0; }
+                else { $nsDebit -= $nsCredit; $nsCredit = 0; }
+            }
+
+            if ($nsDebit == 0 && $nsCredit == 0) continue;
+
+            $lrDebit = $lrCredit = $nerDebit = $nerCredit = 0;
+            if (in_array($account->type, ['revenue', 'expense'])) {
+                $lrDebit = $nsDebit; $lrCredit = $nsCredit;
+            } else {
+                $nerDebit = $nsDebit; $nerCredit = $nsCredit;
+            }
+
+            $rows[] = compact('account', 'nsDebit', 'nsCredit', 'lrDebit', 'lrCredit', 'nerDebit', 'nerCredit');
+            $totals['ns_debit']  += $nsDebit;  $totals['ns_credit']  += $nsCredit;
+            $totals['lr_debit']  += $lrDebit;  $totals['lr_credit']  += $lrCredit;
+            $totals['ner_debit'] += $nerDebit; $totals['ner_credit'] += $nerCredit;
+        }
+
+        $labaRugi = $totals['lr_credit'] - $totals['lr_debit'];
+        $periode  = \Carbon\Carbon::create($year, $month)->translatedFormat('F Y');
+
+        $pdf = Pdf::loadView('laporan.neraca-lajur-pdf',
+            compact('rows', 'totals', 'labaRugi', 'periode'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download("neraca-lajur-{$year}-{$month}.pdf");
+    }
 }

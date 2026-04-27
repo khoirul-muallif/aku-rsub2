@@ -16,6 +16,8 @@ use Filament\Tables\Table;
 
 class AccountResource extends Resource
 {
+    protected static ?string $label = 'Akun';
+    protected static ?string $pluralLabel = 'Daftar Akun';
     protected static ?string $model = Account::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
